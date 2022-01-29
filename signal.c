@@ -21,11 +21,11 @@ void error(const char *msg)
 // calling main
 int main(int argc, char *argv[])
 {		
+	// variables
 	int signalfd;
 	char * signalfifo = "/tmp/signalfifo";
 
-
-	// setting the FIFO
+	// set FIFO
 	if (mkfifo(signalfifo, S_IRUSR | S_IWUSR) != 0)
 	{
 		//perror("Cannot create Signal fifo. Already existing?");
@@ -33,10 +33,11 @@ int main(int argc, char *argv[])
 
 	char buffer[256];
 
-	// opening FIFO 
+	// open FIFO 
 	signalfd = open(signalfifo, O_RDWR);  //read-write mode
-	if (signalfd == 0) {
-		perror("Cannot open fifo");
+	if (signalfd == 0) 
+	{
+		perror("FIFO can't be opened");
 		unlink(signalfifo);
 		exit(1);
 	}
@@ -44,14 +45,14 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		// first input signal from user
-		printf("Please enter the Signal start / stop / dump log : ");
+		printf("Please enter signal (choose betwenn start, stop ordump log) : ");
 		bzero(buffer,256);
 		fgets(buffer,256,stdin);
 		
-		// writing the input inside FIFO
+		// write input inside FIFO
 		int n = write(signalfd,buffer,sizeof(buffer));
 		if (n < 0) 
-	 		error("ERROR writing to socket");
+	 		error("ERROR when writing to socket");
 		
 		printf("Signal written to Signal Fifo: %s\n", buffer);
 	}

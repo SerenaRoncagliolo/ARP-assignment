@@ -29,7 +29,7 @@ struct Token {
 
 int main(int argc, char *argv[])
 {
-
+	// declare variables
 	int sockfd, portno, n, position;
 	float receivedtoken, result;
 	struct sockaddr_in serv_addr;
@@ -38,33 +38,31 @@ int main(int argc, char *argv[])
 	struct Token newtoken;
 	char *ret;
 
-
+	// paths
 	char * serverfifo = "/tmp/serverfifo";
 	char * signalfifo = "/tmp/signalfifo";
 	char * logfifo = "/tmp/logfifo";
 
-	// creating the FIFOs
-
+	// create the FIFOs
 	if (mkfifo(serverfifo, 0666) != 0)
 	{
-	//perror("Cannot create Server fifo. Already existing?");
+		//perror("Cannot create Server fifo. Already existing?");
 	}
 
 	if (mkfifo(signalfifo, 0666) != 0)
 	{
-	//perror("Cannot create Signal fifo. Already existing?");
+		//perror("Cannot create Signal fifo. Already existing?");
 	}
 
 	if (mkfifo(logfifo, 0666) != 0)
 	{
-	//perror("Cannot create Log fifo. Already existing?");
+		//perror("Cannot create Log fifo. Already existing?");
 	}
 
-
 	// Opening FIFOs
+	int serverfd, signalfd, logfd; // needed variables
 
-	int serverfd, signalfd, logfd;
-
+	// read only
 	serverfd = open(serverfifo, O_RDONLY | O_NONBLOCK);
 	if (serverfd == 0)
 		perror("Cannot open server fifo");
@@ -73,12 +71,12 @@ int main(int argc, char *argv[])
 	if (signalfd == 0)
 		perror("Cannot open signal fifo");
 
+	// write only
 	logfd = open(logfifo, O_WRONLY);
 	if (logfd == 0)
 		perror("Cannot open Log fifo");
 
-
-	// Creating and Binding the Socket with Process G
+	// Create and bind the Socket with Process G
     if (argc < 3) {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(0);
@@ -103,14 +101,12 @@ int main(int argc, char *argv[])
 
 
 
-	//  Token initialize
-	
-    printf("Please enter the starting Token: ");
+	//  Token initialization
+    printf("Enter Token value: ");
     scanf("%lf",&token.data);
     ctime(&token.t);
 
-	// intial Token in the Socket
-    
+	// intial Token in the Socke
     n = write(sockfd,&token,sizeof(token));
     if (n < 0) 
          error("ERROR writing to socket");
