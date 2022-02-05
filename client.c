@@ -29,7 +29,7 @@ struct Token {
 
 int main(int argc, char *argv[])
 {
-	// declare variables
+
 	int sockfd, portno, n, position;
 	float receivedtoken, result;
 	struct sockaddr_in serv_addr;
@@ -38,12 +38,16 @@ int main(int argc, char *argv[])
 	struct Token newtoken;
 	char *ret;
 
-	// paths
+
 	char * serverfifo = "/tmp/serverfifo";
 	char * signalfifo = "/tmp/signalfifo";
 	char * logfifo = "/tmp/logfifo";
 
-	// create the FIFOs
+	// create FIFOs
+	// mkfifo(<pathname>, <permission>)
+	//mkfifo(myfifo, 0666);
+
+	// Server
 	if (mkfifo(serverfifo, 0666) != 0)
 	{
 		//perror("Cannot create Server fifo. Already existing?");
@@ -60,34 +64,37 @@ int main(int argc, char *argv[])
 	}
 
 	// Opening FIFOs
-	int serverfd, signalfd, logfd; // needed variables
+	int serverfd, signalfd, logfd;
 
-	// read only
+	// Open FIFO open () read only
 	serverfd = open(serverfifo, O_RDONLY | O_NONBLOCK);
+	// check for error
 	if (serverfd == 0)
-		perror("Cannot open server fifo");
+		perror("Server fifo can't be opened");
 
 	signalfd = open(signalfifo, O_RDONLY | O_NONBLOCK);
 	if (signalfd == 0)
-		perror("Cannot open signal fifo");
+		perror("Signal fifo can't be opened");
 
-	// write only
 	logfd = open(logfifo, O_WRONLY);
 	if (logfd == 0)
-		perror("Cannot open Log fifo");
+		perror("Log fifo can't be opened");
 
-	// Create and bind the Socket with Process G
+	// Create and bind the socket with the Process G
     if (argc < 3) {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(0);
     }
-    portno = atoi(argv[2]);
+	// socket() create an unbound socket in a communications domain
+	// it returns a file descriptor that can be used in later function calls that operate on sockets.
+    portno = atoi(argv[2]); // converts the string argument str to an integer
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
         error("ERROR opening socket");
+
     server = gethostbyname(argv[1]);
     if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host\n");
+        fprintf(stderr,"ERROR, the host doesn't exist\n");
         exit(0);
     }
     bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -99,22 +106,20 @@ int main(int argc, char *argv[])
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
         error("ERROR connecting");
 
-
-
-	//  Token initialization
+	//  Token initialize
     printf("Enter Token value: ");
     scanf("%lf",&token.data);
     ctime(&token.t);
 
-	// intial Token in the Socke
+	// write intial Token value in the Socket  
     n = write(sockfd,&token,sizeof(token));
     if (n < 0) 
-         error("ERROR writing to socket");
+         error("ERROR writing to socket"); // check if working
 
 	int start = 0;
 	int stop = 0;
 
-    	int DT = atoi(argv[3]);
+    	int DT = atoi(argv[3]); // converts the string argument str to an integer
     	int RF = atoi(argv[4]);
 
 	while(1)
@@ -123,17 +128,15 @@ int main(int argc, char *argv[])
 		struct timeval tv;
 		int retval;
 
-		//  SELECT File Descriptors
-
-		FD_ZERO(&rfds);
-		FD_SET(serverfd, &rfds);
+		// Select file descriptor
+		FD_ZERO(&rfds); // Initializes the file descriptor set fdset to have zero bits for all file descriptors.
+		FD_SET(serverfd, &rfds); // FD_SET(fd, &fdset)   Sets the bit for the file descriptor fd in the file descriptor set fdset.
 		FD_SET(signalfd, &rfds);
 		/* Wait up to 2 seconds. */
 		tv.tv_sec = 2;
 		tv.tv_usec = 0;
 
-		// SELECT controls if there are data in the Signal Fifo or in the Server Fifo
-			
+		// select() controls if there are data in the Signal Fifo or in the Server Fifo		
 		retval = select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
 		if (retval == -1)
 		       perror("select()");
@@ -148,42 +151,41 @@ int main(int argc, char *argv[])
 
 
 		// priority given to the signal FIFO
+		// FD_ISSET Returns a non-zero value if the bit for the file descriptor fd is set in the file descriptor set pointed to by fdset, and 0 otherwise.
 		if (FD_ISSET(signalfd, &rfds) == 1)
 		{
 			// Reading the data from the Signal Fifo
 			n = read(signalfd,pipebuffer,256);
 			if (n < 0) 
-				error("ERROR reading from Signal Pipe");
+				error("ERROR: can't read data from signal pipe");
 
-			printf("Signal Received: %s\n", pipebuffer);
+			printf("The received signal is: %s\n", pipebuffer);
 
-			// If the received signal is 'Start', >> Start flag to 1
-
+			// If the received signal is 'start', >> Start flag to 1
 			if(strcmp(pipebuffer, "start\n")==0)
 			{
-				start = 1;
+				start = 1; // flag
 			}
 
-			// If the received signal is 'Stop', >> Start flag to 0
+			// If the received signal is 'stop', >> Start flag to 0
 			else if(strcmp(pipebuffer, "stop\n")==0)
 			{
-				start = 0;
+				start = 0; // flag
 			}
 
 			// If the received signal is 'dump log', >> Start flag to 0
 			// and display the content of the log file on the screen
-
 			if (strcmp(pipebuffer, "dump log\n") == 0) {
-			FILE *fptr;
+				FILE *fptr;
 	  
-			char filename[100] = "log.log", c;
+				char filename[100] = "log.log", c;
 		  
-		  	// Open the Log File in Read mode
-			fptr = fopen(filename, "r");
-			if (fptr == NULL)
-			{
-			printf("Cannot open file \n");
-			exit(0);
+		  		// Open the Log File in Read mode
+				fptr = fopen(filename, "r");
+				if (fptr == NULL)
+				{
+				printf("File can't be openedì\n");
+				exit(0);
 			}
 		  	
 			// Extracting the contents of the Log file until the EOF,
@@ -210,12 +212,10 @@ int main(int argc, char *argv[])
 
 			int nb = write(logfd, logbuffer, sizeof(logbuffer));
 			if (nb == 0)
-				perror("Write error\n");
+				perror("Writing ERROR\n");
 
 			bzero(logbuffer,256);
-			bzero(pipebuffer,256);
-
-			
+			bzero(pipebuffer,256);			
 		}
 
 		// If there are data in the server FIFO
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
 
 
 			sprintf(pipebuffer,"%f", token.data);
-			printf("Token Received From Server: %s\n", pipebuffer);
+			printf("The received token from server is: %s\n", pipebuffer);
 
 			// Writing the value of the received Token inside the log Fifo
 			time(&t);
@@ -248,13 +248,12 @@ int main(int argc, char *argv[])
 
 			bzero(logbuffer,256);
 
-			printf("Received Token in float: %f\n", token.data);
+			printf("The received token is: %f\n", token.data);
 
 			// Compute the new Token
-
-            result = token.data+(DT/1000000)* sin(2*3.14*RF*token.data) ;
+			result = token.data+(DT/1000000)* sin(2*3.14*RF*token.data) ;
 			
-			printf("Token after computation: %f\n", result);
+			printf("The new computed toked is: %f\n", result);
 
 			usleep(DT);
 
@@ -263,7 +262,7 @@ int main(int argc, char *argv[])
 			ctime(&newtoken.t);
 
 			// Writing the New Token inside the socket
-		    	n = write(sockfd,&newtoken,sizeof(newtoken));
+		    n = write(sockfd,&newtoken,sizeof(newtoken));
 	  		if (n < 0) 
 	       			error("ERROR writing to socket");
 
@@ -288,11 +287,11 @@ int main(int argc, char *argv[])
 			bzero(logbuffer,256);
 			bzero(pipebuffer,256);
 		}
-
-		// If no data is present inside the Pipes >> wait
 		else if (FD_ISSET(serverfd, &rfds) == 0 && FD_ISSET(signalfd, &rfds) == 0)
 		{
-			printf("No data in any of the PIPES \n");
+		// If no data is present inside the Pipes >> wait
+
+			printf("There is no data in any of the pipes \n");
 		}
 
 	}

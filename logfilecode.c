@@ -13,6 +13,8 @@
 #include <sys/select.h>
 #include <time.h>
 
+
+
 void error(const char *msg)
 {
     perror(msg);
@@ -22,37 +24,35 @@ void error(const char *msg)
 int main()
 {
 	char buffer[256];
-
 	FILE * fp;
 	fp = fopen("log.log", "a");
-	char * logFifo = "/tmp/logfifo";
-
-	int logfd = open(logFifo, O_RDONLY);
-
+	char * logfifo = "/tmp/logfifo";
+	int logfd = open(logfifo, O_RDONLY);
 	if (logfd == 0)
-		perror("Can't open Log fifo");
+		perror("Cannot open Log fifo");
 	
 	
-	while(1) // LOOP
+	while(1)
 	{
 		// Opening the log File
 		fp = fopen("log.log", "a");
 
-		// Opening the logFifo in Read Only mode
-		int logfd = open(logFifo, O_RDONLY);
+		// Opening the log Fifo in Read Only mode
+		int logfd = open(logfifo, O_RDONLY);
 		if (logfd == 0)
-			perror("Can't open Log fifo");	
+			perror("Cannot open Log fifo");
+		
 		bzero(buffer,256);
 	
 
 		// Reading data from the Log Fifo
 		int n = read(logfd,buffer,256);
 		if (n < 0) 
-			error("ERROR when reading from logFifo");
+			error("ERROR reading from Log Fifo");
 
-		// Appending the data read from the FIFO, inside the log file
+		// Appending the data read from the Fifo, inside the log file
 		fputs(buffer,fp);
-		printf("Data written as log: %s\n",buffer);
+		printf("Characters written to the log file: %s\n",buffer);
 
 		close(logfd);
 		fclose(fp);
