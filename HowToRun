@@ -1,0 +1,13 @@
+HOW TO RUN 
+
+From terminal, enter this folder
+Open a terminal and write:
+$ make
+$ ./Launcher
+
+This will create the processes executables, while the launcher will initialise and start them corretly
+
+Open a second terminal and write:
+$ killall -SIGUSR1 S 
+
+This command start sending tokens.
