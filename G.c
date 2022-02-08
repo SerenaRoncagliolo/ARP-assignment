@@ -37,16 +37,16 @@ void error(char *my_token) // Define function
 int main(int argc, char *argv[])
 {	
 	// token variables
-    	char token_buffer[SIZE]; 
-    	double token_to_send;
-	double token_received; 
-    	token_to_send = 0; // init
+    	char bufferT[SIZE]; 
+    	double tokenSent;
+	double tokenReceived; 
+    	tokenSent = 0; // init
 	
 	// struct for token
-    	struct my_token message_to_send, message_received; // init structs
+    	struct my_token messSent, messReceived; // init structs
 	
 	// print
-    	printf("Process G: Start execution\n");
+    	printf("PROCESS G: Start execution\n");
 
 	// init vars
     	int sockfd;
@@ -138,30 +138,30 @@ int main(int argc, char *argv[])
 		// the read() function reads N bytes of input into the memory 
 		// area indicated by buf. A successful read() updates the access
 		// time for the file.
-        	n = read(newsockfd, &message_received, sizeof(message_received)); // Read the socket
+        	n = read(newsockfd, &messReceived, sizeof(messReceived)); // Read the socket
 
         	if (n < 0)
             		error((char*)"ERROR while reading from socket\n");
 
-        	printf("PROCESS G: Token value:%f, Timestamp: %f\n", message_received.token, message_received.timestamp);
+        	printf("PROCESS G: Token value:%f, Timestamp: %f\n", messReceived.token, messReceived.timestamp);
 
        		// create new token
-        	token_to_send = message_received.token; 
+        	tokenSent = messReceived.token; 
 		
 		// The function int atoi(const char *str) converts the string 
 		// argument str to an integer (type int).
         	close(atoi(argv[2]));
 
         	// update struct
-        	message_to_send.token = token_to_send; // Create message
-        	message_to_send.timestamp = time(NULL);
+        	messSent.token = tokenSent; // Create message
+        	messSent.timestamp = time(NULL);
 
         	// write new token
 		// write() function writes N bytes from buf to the file or socket 
 		// associated with fs. N should not be greater than INT_MAX 
 		// (defined in the limits.h header file). If N is zero, write() 
 		// simply returns 0 without attempting any other action.
-        	write(atoi(argv[3]), &message_to_send, sizeof(message_to_send));
+        	write(atoi(argv[3]), &messSent, sizeof(messSent));
 	}
 
 }

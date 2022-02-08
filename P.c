@@ -22,19 +22,19 @@
 // process that compute new token, following sine wave
 
 // function declarations
-double New_Token(double received_token, double time_delay, double RF ); 
-void error(char *my_token); 
-void Write_Log(char string[50]); 
+double computeNewToken(double received_token, double time_delay, double RF ); 
+void error(char *myToken); 
+void writeLog(char string[50]); 
 
 // token struct
-struct my_token
+struct myToken
 {
     double token;
     double timestamp;
 };
 
 // log token struct
-struct my_token_to_L 
+struct tokenL 
 {
     double token;
     double timestamp;
@@ -52,42 +52,42 @@ int main(int argc, char *argv[])
     	fd_set file_descriptor_select;
     
 	// Create Variables
-    	int  signaL_Received_int, my_select, max_fd, res, res1, res2, res3, res4;
+    	int  processLReceivedInt, my_select, max_fd, res, res1, res2, res3, res4;
 	
 	// first pipe	
-	int first_pipe = atoi(argv[5]); 
+	int pipe1 = atoi(argv[5]); 
 	// second pipe	
-	int second_pipe = atoi(argv[7]); 
+	int pipe2 = atoi(argv[7]); 
 
 	// token variables
-	double TokenReceived, TokenToSend,TimestampReceived, TimestampToSend, DT, ReferenceFrequency, WaitingTime;
+	double tokenReceived, tokenToBeSent,timestampReceived, timestampSent, dt, rf, waitTime;
 	
 	// boolean checks
 	bool cont_while, unconnected;
 
 	// char to save signal
-    	char signaL_Received[SIZE];
+    	char processLReceived[SIZE];
 
 	// token structs
-	struct my_token ReceivedMessage;
-	struct my_token MessageToSend;
-	struct my_token_to_L L_Sent, L_Received;
+	struct myToken receivedMessage;
+	struct myToken messageToSend;
+	struct tokenL L_Sent, L_Received;
 
 	// atof() convert string to double
 	// set frequency
-    	ReferenceFrequency = atof(argv[1]);
+    	rf = atof(argv[1]);
 	// set waiting time
-	WaitingTime = atof(argv[2])/1000000; // Set a Waiting Time
+	waitTime = atof(argv[2])/1000000; // Set a Waiting Time
 
-	signaL_Received_int= 1;
+	processLReceivedInt= 1;
 
-	TokenReceived = 0.0;
-	TokenToSend = 0.0;
+	tokenReceived = 0.0;
+	tokenToBeSent = 0.0;
 
-	TimestampReceived = time(NULL);
+	timestampReceived = time(NULL);
 
 
-   	printf("RF=%f   WT=%f\n", ReferenceFrequency, WaitingTime);
+   	printf("RF=%f   WT=%f\n", rf, waitTime);
 
     	// vars for sockets
 	int sockfd, portno, n; 
@@ -166,10 +166,10 @@ int main(int argc, char *argv[])
 		// for all file descriptors.
 		FD_ZERO(&file_descriptor_select); 
 		// Sets the bit for the file descriptor fd in the file descriptor set fdset.
-		FD_SET(first_pipe, &file_descriptor_select); 
-        	FD_SET(second_pipe, &file_descriptor_select); 
+		FD_SET(pipe1, &file_descriptor_select); 
+        	FD_SET(pipe2, &file_descriptor_select); 
 
-        	max_fd = first_pipe >second_pipe ? first_pipe : second_pipe;
+        	max_fd = pipe1 >pipe2 ? pipe1 : pipe2;
 
 		// select() allows a program to monitor multiple file descriptors,
 		// waiting until one or more of the file descriptors become "ready"
@@ -183,83 +183,83 @@ int main(int argc, char *argv[])
         	}
 
         	// Three cases
-        	if(FD_ISSET(first_pipe, &file_descriptor_select) && (FD_ISSET(second_pipe, &file_descriptor_select) && (signaL_Received_int == 1)))
+        	if(FD_ISSET(pipe1, &file_descriptor_select) && (FD_ISSET(pipe2, &file_descriptor_select) && (processLReceivedInt == 1)))
 		{
            
 			// Read from process S, given by first pipe
-			res1 = read(first_pipe, &signaL_Received, sizeof(signaL_Received));
+			res1 = read(pipe1, &processLReceived, sizeof(processLReceived));
 
             		//from char to int
-            		sscanf(signaL_Received, "%d", &signaL_Received_int);
+            		sscanf(processLReceived, "%d", &processLReceivedInt);
             
 			// Read from process G, given by first pipe
             		
-            		res2 = read(second_pipe, &ReceivedMessage, sizeof(ReceivedMessage));
+            		res2 = read(pipe2, &receivedMessage, sizeof(receivedMessage));
 
-            		TokenReceived = ReceivedMessage.token;
+            		tokenReceived = receivedMessage.token;
 
-            		TimestampReceived = ReceivedMessage.timestamp;
+            		timestampReceived = receivedMessage.timestamp;
 		}
-		else if (FD_ISSET(first_pipe, &file_descriptor_select))
+		else if (FD_ISSET(pipe1, &file_descriptor_select))
 		{
 		    
 		    // Read from S
-		    res = read(first_pipe, &signaL_Received, sizeof(signaL_Received));
+		    res = read(pipe1, &processLReceived, sizeof(processLReceived));
 
 		    //Convert from char to int
-		    sscanf(signaL_Received, "%d", &signaL_Received_int);
+		    sscanf(processLReceived, "%d", &processLReceivedInt);
 		}
-	        else if (FD_ISSET(second_pipe, &file_descriptor_select) && (signaL_Received_int == 1))
+	        else if (FD_ISSET(pipe2, &file_descriptor_select) && (processLReceivedInt == 1))
 	        {
 			// Read from G
-			res = read(second_pipe, &ReceivedMessage, sizeof(ReceivedMessage));
+			res = read(pipe2, &receivedMessage, sizeof(receivedMessage));
 
 			//Convert from char to double
-			TokenReceived = ReceivedMessage.token;
-			TimestampReceived = ReceivedMessage.timestamp;
+			tokenReceived = receivedMessage.token;
+			timestampReceived = receivedMessage.timestamp;
 		}
 
 
 		// Receive-Send Tokens
-		if(signaL_Received_int == 1) 
+		if(processLReceivedInt == 1) 
 	        {
 			//Send the received token to L to write it on log file
-			L_Received.token = TokenReceived;
-			L_Received.timestamp = TimestampReceived;
+			L_Received.token = tokenReceived;
+			L_Received.timestamp = timestampReceived;
 			L_Received.received = true;
 			write(atoi(argv[6]), &L_Received, sizeof(L_Received));
 
             		//Compute the sending token
-            		TimestampToSend = time(NULL); //timestamp
+            		timestampSent = time(NULL); //timestamp
 	
-			DT =  WaitingTime + TimestampToSend - TimestampReceived; //Difference time
+			dt =  waitTime + timestampSent - timestampReceived; //Difference time
 
-			printf("\nTime Received: %f.\nTime Sent: %f\nDT: %f\n", TimestampReceived, TimestampToSend, DT);
+			printf("\nTime Received: %f.\nTime Sent: %f\nDT: %f\n", timestampReceived, timestampSent, dt);
 
 		    	//Creating the message to send to G using the socket
-		    	TokenToSend = New_Token(TokenReceived, DT, ReferenceFrequency);
+		    	tokenToBeSent = computeNewToken(tokenReceived, dt, rf);
 
-		    	MessageToSend.token = TokenToSend;
-			MessageToSend.timestamp = TimestampToSend;
+		    	messageToSend.token = tokenToBeSent;
+			messageToSend.timestamp = timestampSent;
 
-            		printf("\nReceiving/Sending tokens.\nP: Token Received: %f.\nP: Token Sent: %f\n", TokenReceived, TokenToSend);
+            		printf("\nReceiving/Sending tokens.\nP: Token Received: %f.\nP: Token Sent: %f\n", tokenReceived, tokenToBeSent);
 
-            		n = write(sockfd, &MessageToSend, sizeof(MessageToSend)); //Write message on socket
+            		n = write(sockfd, &messageToSend, sizeof(messageToSend)); //Write message on socket
 		    	if (n < 0)
 			{
 			        error((char*)"\nERROR while writing on socket.\n");
 			}
 
 			//Send the sent token to L for Log file
-		    	L_Sent.token = TokenToSend;
-			L_Sent.timestamp = WaitingTime + TimestampToSend; 
+		    	L_Sent.token = tokenToBeSent;
+			L_Sent.timestamp = waitTime + timestampSent; 
 			L_Sent.received = false;
 			write(atoi(argv[6]), &L_Sent, sizeof(L_Sent));
         	}
-		else if(signaL_Received_int == 0)    //If signal received from S is =0, start receiving and sending tokens
+		else if(processLReceivedInt == 0)    //If signal received from S is =0, start receiving and sending tokens
 		{
 
-	        	Write_Log((char*)"PROCESS P: stop communication of tokens.\n");
+	        	writeLog((char*)"PROCESS P: stop communication of tokens.\n");
 	
 	        }
 		else
@@ -278,23 +278,23 @@ int main(int argc, char *argv[])
 
 
 // Functions
-double New_Token(double received_token, double time_delay, double RF )
+double computeNewToken(double received_token, double time_delay, double RF )
 {
 	// new token formula computation
-    	double new_token;
-    	new_token = received_token + time_delay*(1.0 - (pow(received_token,2.0))/2)*2*M_PI*RF;
-    	return new_token;
+    	double computeNewToken;
+    	computeNewToken = received_token + time_delay*(1.0 - (pow(received_token,2.0))/2)*2*M_PI*RF;
+    	return computeNewToken;
 }
 
 
-void error(char *my_token)
+void error(char *myToken)
 {
-	perror(my_token);
+	perror(myToken);
 	exit(0);
 }
 
 
-void Write_Log(char string[50])
+void writeLog(char string[50])
 {
     	FILE * f;
 	time_t t = time(NULL);

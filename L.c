@@ -22,12 +22,12 @@
 // Process L writes data events in a  log file 
 
 // functions declarations
-void WritingLogReceived(double ReceivedToken, double ReceivedTime, int Iteration); // Initialize function
-void WritingLogSent(double SentToken, double TimeSent, int Iteration); // Initialize function
-void error(char *my_token); // Initialize function
+void writeLogReceived(double tokenReceived, double timeReceived, int iter); // Initialize function
+void writeLogSent(double tokenSent, double timeSent, int iter); // Initialize function
+void error(char *myToken); // Initialize function
 
 // token struct initializations
-struct my_token_to_L // Initialize struct
+struct tokenL // Initialize struct
 {
 	double token;
 	double timestamp;
@@ -41,25 +41,25 @@ int main(int argc, char *argv[])
 
 	printf("PROCESS L: start execution\n");
 	// init token structs
-    	struct my_token_to_L my_token_received;
-    	int Iteration; // counter to keep count of num of iterations 
-    	Iteration = 0; // Set to zero the iterations 
+    	struct tokenL myTokenReceived;
+    	int iter; // counter to keep count of num of iterations 
+    	iter = 0; // Set to zero the iterations 
     	close(atoi(argv[2])); // To close writing of the pipe
 
 	while(1)  // Performed on Log
 	{
 		// read token received
-		read(atoi(argv[1]), &my_token_received, sizeof(my_token_received));  // Read the data from P
+		read(atoi(argv[1]), &myTokenReceived, sizeof(myTokenReceived));  // Read the data from P
 
 		// Flag to check if received correctly
-		if(my_token_received.received == true)
+		if(myTokenReceived.received == true)
 		{
-			WritingLogReceived(my_token_received.token, my_token_received.timestamp, Iteration);
+			writeLogReceived(myTokenReceived.token, myTokenReceived.timestamp, iter);
 		}
 		else 
 		{
-        		WritingLogSent(my_token_received.token, my_token_received.timestamp, Iteration);
-        		Iteration ++;
+        		writeLogSent(myTokenReceived.token, myTokenReceived.timestamp, iter);
+        		iter ++;
         	}
     	}
 
@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
 
 
 // check error token funciton
-void error(char *my_token)
+void error(char *myToken)
 {
-    perror(my_token);
+    perror(myToken);
     exit(0);
 }
 
 // function to write on log the received info
-void WritingLogReceived(double ReceivedToken, double ReceivedTime, int Iteration)
+void writeLogReceived(double tokenReceived, double timeReceived, int iter)
 {
 	// open file to write on
     	FILE * f;
@@ -89,7 +89,7 @@ void WritingLogReceived(double ReceivedToken, double ReceivedTime, int Iteration
     	}
 
 	// print token received
-    	fprintf(f, "\n[%d]\n-%f: Token Received: <%f>", Iteration, ReceivedTime, ReceivedToken );
+    	fprintf(f, "\n[%d]\n-%f: Token Received: <%f>", iter, timeReceived, tokenReceived );
     
 	// close log file
     	fclose(f);
@@ -97,7 +97,7 @@ void WritingLogReceived(double ReceivedToken, double ReceivedTime, int Iteration
 
 
 // function to write the computed token on the log file
-void WritingLogSent(double SentToken, double TimeSent, int Iteration)
+void writeLogSent(double tokenSent, double timeSent, int iter)
 {
 	FILE * f;
 	f = fopen("Log_File.log", "a");
@@ -108,7 +108,7 @@ void WritingLogSent(double SentToken, double TimeSent, int Iteration)
    	     exit(0);
    	}
 
-	fprintf(f, "\n[%d]\n-%f: Token Sent: <%f>",Iteration, TimeSent, SentToken );   
+	fprintf(f, "\n[%d]\n-%f: Token Sent: <%f>",iter, timeSent, tokenSent );   
 	fclose(f);
 }
 

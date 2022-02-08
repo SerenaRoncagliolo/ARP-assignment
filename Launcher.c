@@ -45,16 +45,16 @@ int main()
 	// it is used to represent process ids. 
 	// Whenever, we want to declare a variable that is going to be deal
 	// with the process ids we can use pid_t data type
-    	pid_t P_process; // Initialize P process
-    	pid_t L_process; // Initialize L process
-    	pid_t S_process; // Initialize S process
-    	pid_t G_process; // Initialize G process
+    	pid_t processP; // Initialize P process
+    	pid_t processL; // Initialize L process
+    	pid_t processS; // Initialize S process
+    	pid_t processG; // Initialize G process
 
     	// Using these variables, the processes can return varibles for child
-    	int status_P_child;
-	int status_L_child;
-	int status_S_child;
-	int status_G_child; 
+    	int statusChildP;
+	int statusChildL;
+	int statusChildS;
+	int statusChildG; 
 
     	// pipes declaration
 	// connection process S and P
@@ -83,10 +83,10 @@ int main()
 	}
 
 	// Arrays to store data for the exec
-	char *argumentP[12];
-	char *argumentG[5];
-	char *argumentS[4];
-	char *argumentL[4];
+	char *argP[12];
+	char *argG[5];
+	char *argS[4];
+	char *argL[4];
 	
 	// Buffers used to read and write
 	// Pipe S-P
@@ -108,53 +108,53 @@ int main()
 	sprintf(pipe_pl_w, "%d", pipe_pl[1]);
 
 	// Send data on process P
-	argumentP[1] = referencefrequency; 
-	argumentP[2] = waitingtime; 
-	argumentP[3] = ip; 
-	argumentP[4] = portnumber; 
-	argumentP[5] = pipe_sp_r; 
-	argumentP[6] = pipe_sp_w; 
-	argumentP[7] = pipe_gp_r; 
-	argumentP[8] = pipe_gp_w; 
-	argumentP[9] = pipe_pl_r; 
-	argumentP[10] = pipe_pl_w; 
-	argumentP[11] = NULL;
+	argP[1] = referencefrequency; 
+	argP[2] = waitingtime; 
+	argP[3] = ip; 
+	argP[4] = portnumber; 
+	argP[5] = pipe_sp_r; 
+	argP[6] = pipe_sp_w; 
+	argP[7] = pipe_gp_r; 
+	argP[8] = pipe_gp_w; 
+	argP[9] = pipe_pl_r; 
+	argP[10] = pipe_pl_w; 
+	argP[11] = NULL;
 
    	
     	// Send data on process L
-    	argumentL[1] = pipe_pl_r; 
-    	argumentL[2] = pipe_pl_w; 
-    	argumentL[3] = NULL;
+    	argL[1] = pipe_pl_r; 
+    	argL[2] = pipe_pl_w; 
+    	argL[3] = NULL;
 
     	// Send data on process S
-    	argumentS[1] = pipe_sp_r; 
-    	argumentS[2] = pipe_sp_w; 
-    	argumentS[3] = NULL;
+    	argS[1] = pipe_sp_r; 
+    	argS[2] = pipe_sp_w; 
+    	argS[3] = NULL;
 
 	// Send data on process G
-	argumentG[1] = portnumber;
-	argumentG[2] = pipe_gp_r; //read, pipe2
-	argumentG[3] = pipe_gp_w; //write, pipe2
-	argumentG[4] = NULL;
+	argG[1] = portnumber;
+	argG[2] = pipe_gp_r; //read, pipe2
+	argG[3] = pipe_gp_w; //write, pipe2
+	argG[4] = NULL;
 
 	// processes creation
-    	G_process = fork(); //Creates child process G
+    	processG = fork(); //Creates child process G
 
     	//Check on the fork
-    	if (G_process < 0)
+    	if (processG < 0)
     	{
         	perror("ERROR CHILD_G FAILED");
         	return -1;
     	}
 
-	if (G_process == 0)
+	if (processG == 0)
     	{
         	fflush(stdout);
         	char *nameG; 
         	nameG = (char *)"./G";
-        	argumentG[0] = nameG;
+        	argG[0] = nameG;
 		//Start process G execution
-        	execvp(nameG, argumentG); 
+        	execvp(nameG, argG); 
     	}
     	else
     	{
@@ -162,60 +162,60 @@ int main()
 		// which is called child process. The child process runs 
 		// concurrently with the process that makes the fork() call 
 		// (parent process)
-        	L_process = fork();//Creates child process L
+        	processL = fork();//Creates child process L
 
         	//Check if fork working
-        	if (L_process < 0)
+        	if (processL < 0)
         	{
             		perror("LAUNCHER: errore creating child of L");
             		return -1;
         	}
         	
-		if (L_process == 0)
+		if (processL == 0)
 		{
 			fflush(stdout);
 			char *nameL; 
 		    	nameL = (char *)"./L";
-		    	argumentL[0] = nameL; 
+		    	argL[0] = nameL; 
 			//Start process L execution
-		    	execvp(nameL, argumentL); 
+		    	execvp(nameL, argL); 
 		}
         	else
         	{
 			// Create child process S
-            		S_process = fork(); 
+            		processS = fork(); 
 			
-			if (S_process < 0)
+			if (processS < 0)
             		{
 		        	perror("ERROR CHILD_S FAILED");
 		        	return -1;
             		}
 
-			if (S_process == 0)
+			if (processS == 0)
 			{
 				fflush(stdout);
 				char *nameS; 
 				nameS = (char *)"./S";
-				argumentS[0] = nameS;
-				execvp(nameS, argumentS); //Start process S execution
+				argS[0] = nameS;
+				execvp(nameS, argS); //Start process S execution
 			}
             		else  
             		{
-                		P_process = fork(); //Creates child process P
+                		processP = fork(); //Creates child process P
 
 
-                		if (P_process < 0)
+                		if (processP < 0)
 				{
 				 	perror("ERROR CHILD_P FAILED");
 					return -1;
 				}
-		        if (P_process == 0)
+		        if (processP == 0)
 		        {
 		            	fflush(stdout);
 		            	char *nameP; 
 		           	nameP = (char *)"./P";
-		            	argumentP[0] = nameP;
-		            	execvp(nameP, argumentP); //Start process P execution
+		            	argP[0] = nameP;
+		            	execvp(nameP, argP); //Start process P execution
 		        }
             	}
         }
@@ -226,49 +226,49 @@ int main()
 	// status information for one of its child processes. 
 	// The calling thread suspends processing until status information 
 	// is available for the specified child process, if the options argument is 0
-        waitpid(P_process, &status_P_child, 0);
-        waitpid(L_process, &status_L_child, 0);
-        waitpid(S_process, &status_S_child, 0);
-        waitpid(G_process, &status_G_child, 0);
+        waitpid(processP, &statusChildP, 0);
+        waitpid(processL, &statusChildL, 0);
+        waitpid(processS, &statusChildS, 0);
+        waitpid(processG, &statusChildG, 0);
 
 
         // Check that each process has been terminated correctly
-        if (status_P_child == 0) 
+        if (statusChildP == 0) 
         {
             printf("\nLAUNCHER: child P terminated correctly\n");
         }
 
-        if (status_P_child == 1)
+        if (statusChildP == 1)
         {
             printf("\nLAUNCHER: ERROR child P not terminated correctly\n");
         }
 
-        if (status_L_child == 0) 
+        if (statusChildL == 0) 
         {
             printf("\nLAUNCHER: child L terminated correctly\n");
         }
 
-        if (status_L_child == 1)
+        if (statusChildL == 1)
         {
             printf("\nLAUNCHER: ERROR child L not terminated correctly\n");
         }
 
-        if (status_S_child == 0) 
+        if (statusChildS == 0) 
         {
             printf("\nLAUNCHER: child S terminated correctly\n");
         }
 
-        if (status_S_child == 1)
+        if (statusChildS == 1)
         {
             printf("\nLAUNCHER: ERROR child S not terminated correctly\n");
         }
 
-        if (status_G_child == 0) 
+        if (statusChildG == 0) 
         {
             printf("\nLAUNCHER: child G terminated correctly\n");
         }
 
-        if (status_G_child == 1)
+        if (statusChildG == 1)
         {
             printf("\nLAUNCHER: ERROR child G not terminated correctly\n");
         }
