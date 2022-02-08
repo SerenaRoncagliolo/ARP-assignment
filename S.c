@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
     	if(signal(SIGUSR2, Handler_SIGUSR2) == SIG_ERR)
     	{
-        	printf("\PROCESS S: ERROR can't execute SIGUSR2\n");
+        	printf("\nPROCESS S: ERROR can't execute SIGUSR2\n");
 	}
 	if (signal(SIGINT, Handler_SIGINT) == SIG_ERR)
     	{
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         	if (flag1 == 1 )
         	{
 
-			printf("PROCESS S: SIGUSR1 signal received, send tokens)\n"); 
+			printf("\nPROCESS S: SIGUSR1 signal received, send tokens)\n"); 
 
 			writeLog((char*)"Start Receiving and Sending Tokens\n");
 			// If input == 1 1, P reads and writes tokens
